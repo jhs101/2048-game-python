@@ -5,19 +5,6 @@ import os
 SIZE = 4
 
 # ---------- 이미지 경로 매핑 ----------
-IMG_MAP = {
-    2: "images/2.png",
-    4: "images/4.png",
-    8: "images/8.png",
-    16: "images/16.png",
-    32: "images/32.png",
-    64: "images/64.png",
-    128: "images/128.png",
-    256: "images/256.png",
-    512: "images/512.png",
-    1024: "images/1024.png",
-    2048: "images/2048.png",
-}
 
 def init_board():
     board = [[0]*SIZE for _ in range(SIZE)]
@@ -87,7 +74,7 @@ def can_move(board):
     return False
 
 # ---------- UI ----------
-st.title("2048 이미지 버전 🖼️")
+st.title("2048")
 
 if "board" not in st.session_state:
     st.session_state.board = init_board()
@@ -107,40 +94,26 @@ with col3:
         st.session_state.board = init_board()
         st.session_state.score = 0
 
-# 컨트롤 버튼
-col_up = st.columns([1,1,1])
-with col_up[1]:
-    if st.button("⬆️ 위"):
+# ---------- 키 입력 ----------
+key_event = keyup("방향키를 눌러 이동하세요 (↑,↓,←,→)")
+
+if key_event:
+    new_board, gained = None, 0
+    if key_event == "ArrowUp":
         new_board, gained = move_up(st.session_state.board)
-        if new_board != st.session_state.board:
-            st.session_state.board = new_board
-            st.session_state.score += gained
-            add_new_tile(st.session_state.board)
-
-col_left, col_down, col_right = st.columns(3)
-with col_left:
-    if st.button("⬅️ 왼쪽"):
-        new_board, gained = move_left(st.session_state.board)
-        if new_board != st.session_state.board:
-            st.session_state.board = new_board
-            st.session_state.score += gained
-            add_new_tile(st.session_state.board)
-with col_down:
-    if st.button("⬇️ 아래"):
+    elif key_event == "ArrowDown":
         new_board, gained = move_down(st.session_state.board)
-        if new_board != st.session_state.board:
-            st.session_state.board = new_board
-            st.session_state.score += gained
-            add_new_tile(st.session_state.board)
-with col_right:
-    if st.button("➡️ 오른쪽"):
+    elif key_event == "ArrowLeft":
+        new_board, gained = move_left(st.session_state.board)
+    elif key_event == "ArrowRight":
         new_board, gained = move_right(st.session_state.board)
-        if new_board != st.session_state.board:
-            st.session_state.board = new_board
-            st.session_state.score += gained
-            add_new_tile(st.session_state.board)
 
-# 보드 렌더링
+    if new_board and new_board != st.session_state.board:
+        st.session_state.board = new_board
+        st.session_state.score += gained
+        add_new_tile(st.session_state.board)
+
+# ---------- 보드 렌더링 ----------
 for row in st.session_state.board:
     cols = st.columns(SIZE)
     for j, val in enumerate(row):
