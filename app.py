@@ -95,7 +95,6 @@ with col3:
         st.session_state.score = 0
 
 # ---------- 키 입력 ----------
-key_event = keyup("방향키를 눌러 이동하세요 (↑,↓,←,→)")
 
 if key_event:
     new_board, gained = None, 0
