@@ -109,4 +109,3 @@ if game_over(st.session_state.board):
 if st.button("🔄 New Game"):
     st.session_state.board = new_game()
     st.session_state.score = 0
-    st.experimental_rerun()
