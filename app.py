@@ -1,11 +1,9 @@
 import streamlit as st
 import numpy as np
 import random
-from streamlit_key_events import key_events
 
-st.set_page_config(page_title="2048 Game (Keyboard Events)", layout="centered")
+st.set_page_config(page_title="2048 Game", layout="centered")
 
-# --- 게임 로직 (이전과 동일) ---
 def new_game(size=4):
     board = np.zeros((size, size), dtype=int)
     board = add_new_tile(board)
@@ -78,59 +76,35 @@ def game_over(board):
                 return False
     return True
 
-# --- 세션 초기화 ---
+st.title("🎮 2048 Game")
+
 if "board" not in st.session_state:
     st.session_state.board = new_game()
     st.session_state.score = 0
 
 board = st.session_state.board
 
-st.title("🎮 2048 (Arrow Keys)")
-
-st.write("Click anywhere on the page (or the board) once, then use the arrow keys.")
 st.write(f"**Score:** {st.session_state.score}")
 st.table(board)
 
-# --- streamlit-key-events 사용: 키 이벤트를 가져온다 ---
-events = key_events(
-    key_list=["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "r", "R"],
-    prompt="Focus the page and press arrow keys (r to restart).",
-    use_container_width=True,
-)
+col1, col2, col3, col4, col5 = st.columns(5)
+if col2.button("⬅️ Left"):
+    new_board, score = move_left(board)
+elif col3.button("⬆️ Up"):
+    new_board, score = move_up(board)
+elif col4.button("⬇️ Down"):
+    new_board, score = move_down(board)
+elif col5.button("➡️ Right"):
+    new_board, score = move_right(board)
+else:
+    new_board, score = board, 0
 
-# events는 최근 이벤트들의 리스트(딕셔너리). 가장 최근 이벤트를 처리.
-key_pressed = None
-if events and isinstance(events, list) and len(events) > 0:
-    # events 예시: [{"key":"ArrowLeft","type":"keydown","modifiers":{...},"time":...}, ...]
-    last = events[-1]
-    key_pressed = last.get("key")
+if not np.array_equal(board, new_board):
+    st.session_state.board = add_new_tile(new_board)
+    st.session_state.score += score
 
-# --- 키에 따른 이동 처리 ---
-if key_pressed:
-    moved = False
-    if key_pressed in ("ArrowLeft",):
-        new_board, score = move_left(board); moved = True
-    elif key_pressed in ("ArrowRight",):
-        new_board, score = move_right(board); moved = True
-    elif key_pressed in ("ArrowUp",):
-        new_board, score = move_up(board); moved = True
-    elif key_pressed in ("ArrowDown",):
-        new_board, score = move_down(board); moved = True
-    elif key_pressed in ("r", "R"):
-        st.session_state.board = new_game()
-        st.session_state.score = 0
-        st.experimental_rerun()
-    else:
-        new_board, score = board, 0
-
-    if moved and not np.array_equal(board, new_board):
-        st.session_state.board = add_new_tile(new_board)
-        st.session_state.score += score
-        st.experimental_rerun()
-
-# --- 게임 오버 표시 및 버튼 ---
 if game_over(st.session_state.board):
-    st.error("💀 Game Over! Press R to restart or click New Game.")
+    st.error("💀 Game Over! Click 'New Game' to restart.")
 
 if st.button("🔄 New Game"):
     st.session_state.board = new_game()
