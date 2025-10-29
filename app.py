@@ -1,10 +1,11 @@
 import streamlit as st
 import numpy as np
 import random
+from streamlit_key_events import key_events
 
-st.set_page_config(page_title="2048 Game", layout="centered")
+st.set_page_config(page_title="2048 Game (Keyboard Events)", layout="centered")
 
-# --- 게임 로직 함수 ---
+# --- 게임 로직 (이전과 동일) ---
 def new_game(size=4):
     board = np.zeros((size, size), dtype=int)
     board = add_new_tile(board)
@@ -81,87 +82,57 @@ def game_over(board):
 if "board" not in st.session_state:
     st.session_state.board = new_game()
     st.session_state.score = 0
-if "key_pressed" not in st.session_state:
-    st.session_state.key_pressed = None
 
 board = st.session_state.board
 
-# --- UI 출력 ---
-st.title("🎮 2048 Game (Keyboard Version)")
+st.title("🎮 2048 (Arrow Keys)")
+
+st.write("Click anywhere on the page (or the board) once, then use the arrow keys.")
 st.write(f"**Score:** {st.session_state.score}")
 st.table(board)
 
-# --- JavaScript 키 입력 감지 ---
-key_event = st.components.v1.html(
-    """
-    <script>
-    const streamlitDoc = window.parent.document;
-    streamlitDoc.addEventListener('keydown', function(e) {
-        const key = e.key;
-        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)) {
-            window.parent.postMessage({ keyPressed: key }, '*');
-        }
-    });
-    </script>
-    """,
-    height=0,
+# --- streamlit-key-events 사용: 키 이벤트를 가져온다 ---
+events = key_events(
+    key_list=["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "r", "R"],
+    prompt="Focus the page and press arrow keys (r to restart).",
+    use_container_width=True,
 )
 
-# --- 키 입력 처리 ---
-message = st.experimental_get_query_params()
-if "_st_msg" in message:
-    st.session_state.key_pressed = message["_st_msg"][0]
+# events는 최근 이벤트들의 리스트(딕셔너리). 가장 최근 이벤트를 처리.
+key_pressed = None
+if events and isinstance(events, list) and len(events) > 0:
+    # events 예시: [{"key":"ArrowLeft","type":"keydown","modifiers":{...},"time":...}, ...]
+    last = events[-1]
+    key_pressed = last.get("key")
 
-# Streamlit의 프론트엔드에서 오는 메시지를 처리하기 위한 custom JS listener
-st.components.v1.html(
-    """
-    <script>
-    window.addEventListener('message', (event) => {
-        const key = event.data.keyPressed;
-        if (key) {
-            const params = new URLSearchParams(window.location.search);
-            params.set('_st_msg', key);
-            window.location.search = params.toString();
-        }
-    });
-    </script>
-    """,
-    height=0,
-)
-
-# --- 실제 키 입력으로 보드 이동 ---
-key = st.session_state.key_pressed
-
-if key:
+# --- 키에 따른 이동 처리 ---
+if key_pressed:
     moved = False
-    if key == "ArrowLeft":
-        new_board, score = move_left(board)
-        moved = True
-    elif key == "ArrowRight":
-        new_board, score = move_right(board)
-        moved = True
-    elif key == "ArrowUp":
-        new_board, score = move_up(board)
-        moved = True
-    elif key == "ArrowDown":
-        new_board, score = move_down(board)
-        moved = True
+    if key_pressed in ("ArrowLeft",):
+        new_board, score = move_left(board); moved = True
+    elif key_pressed in ("ArrowRight",):
+        new_board, score = move_right(board); moved = True
+    elif key_pressed in ("ArrowUp",):
+        new_board, score = move_up(board); moved = True
+    elif key_pressed in ("ArrowDown",):
+        new_board, score = move_down(board); moved = True
+    elif key_pressed in ("r", "R"):
+        st.session_state.board = new_game()
+        st.session_state.score = 0
+        st.experimental_rerun()
     else:
         new_board, score = board, 0
 
     if moved and not np.array_equal(board, new_board):
         st.session_state.board = add_new_tile(new_board)
         st.session_state.score += score
-        st.session_state.key_pressed = None
         st.experimental_rerun()
 
-# --- 게임 오버 처리 ---
+# --- 게임 오버 표시 및 버튼 ---
 if game_over(st.session_state.board):
-    st.error("💀 Game Over! Press R to restart or click the button below.")
+    st.error("💀 Game Over! Press R to restart or click New Game.")
 
-# --- 새 게임 버튼 ---
 if st.button("🔄 New Game"):
     st.session_state.board = new_game()
     st.session_state.score = 0
-    st.session_state.key_pressed = None
     st.experimental_rerun()
