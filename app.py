@@ -165,4 +165,3 @@ if st.button("🔄 New Game"):
     st.session_state.score = 0
     st.session_state.key_pressed = None
     st.experimental_rerun()
-github launch
