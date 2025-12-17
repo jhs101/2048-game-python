@@ -87,7 +87,7 @@ def can_move(board):
     return False
 
 # ---------- UI ----------
-st.title("2048 이미지 버전 🖼️")
+st.title("2048")
 
 if "board" not in st.session_state:
     st.session_state.board = init_board()
